@@ -4071,6 +4071,22 @@ def : ARMPat<(ARMadde GPR:$src, imm0_65535_neg:$imm, CPSR),
              (SBCrr   GPR:$src, (MOVi16 (imm_not_XFORM imm:$imm)))>,
              Requires<[IsARM, HasV6T2]>;
 
+// Subtraction with flag output or with-carry-in are not canonicalized
+// to addition, so handle those patterns here as well.
+def : ARMPat<(ARMsubc GPR:$src, mod_imm_neg:$imm),
+             (ADDSri  GPR:$src, mod_imm_neg:$imm)>;
+def : ARMPat<(ARMsubc GPR:$src, imm0_65535_neg:$imm),
+             (ADDSrr  GPR:$src, (MOVi16 (imm_neg_XFORM imm:$imm)))>,
+             Requires<[IsARM, HasV6T2]>;
+// The with-carry-in form matches bitwise not instead of the negation.
+// Effectively, the inverse interpretation of the carry flag already accounts
+// for part of the negation.
+def : ARMPat<(ARMsube GPR:$src, mod_imm_not:$imm, CPSR),
+             (ADCri   GPR:$src, mod_imm_not:$imm)>;
+def : ARMPat<(ARMsube GPR:$src, imm0_65535_neg:$imm, CPSR),
+             (ADCrr   GPR:$src, (MOVi16 (imm_not_XFORM imm:$imm)))>,
+             Requires<[IsARM, HasV6T2]>;
+
 // Note: These are implemented in C++ code, because they have to generate
 // ADD/SUBrs instructions, which use a complex pattern that a xform function
 // cannot produce.
